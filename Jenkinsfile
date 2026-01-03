@@ -27,7 +27,10 @@ pipeline {
 
         stage('Stop Old Container') {
             steps {
-                sh 'docker rm -f devops-container || true'
+                sh '''
+                docker ps -q --filter "publish=3000" | xargs -r docker stop
+                docker ps -aq --filter "publish=3000" | xargs -r docker rm
+                '''
             }
         }
 
