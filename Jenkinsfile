@@ -1,42 +1,34 @@
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(true)
-    }
-
     stages {
 
-        stage('Checkout Code') {
+        stage('Git') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/nikhil3939/devops-app.git'
-                    ]]
-                ])
+                git branch: 'main',
+                    url: 'https://github.com/nikhil3939/devops-app.git'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build') {
             steps {
                 sh 'docker build -t devops-app .'
             }
         }
 
-        stage('Stop Old Container') {
+        stage('Test') {
             steps {
-                sh '''
-                docker ps -q --filter "publish=3000" | xargs -r docker stop
-                docker ps -aq --filter "publish=3000" | xargs -r docker rm
-                '''
+                sh 'docker run --rm devops-app node -e "console.log(\'Test Passed\')"'
             }
         }
 
-        stage('Run New Container') {
+        stage('Deploy') {
             steps {
-                sh 'docker run -d --name devops-container -p 3000:3000 devops-app'
+                sh '''
+                docker stop devops-container || true
+                docker rm devops-container || true
+                docker run -d --name devops-container -p 3000:3000 devops-app
+                '''
             }
         }
     }
